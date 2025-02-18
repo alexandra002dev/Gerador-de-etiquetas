@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Gerador de Etiquetas</title>
+    <style>
+      .label-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 20px;
+        justify-content: flex-start;
+        max-width: 100%;
+      }
+
+      .label {
+        width: 200px;
+        height: 50px;
+        border: 1px solid #000;
+        display: grid;
+        grid-template-columns: 45px 1fr;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        font-weight: bold;
+        margin-bottom: 10px;
+        overflow: hidden;
+
+        line-height: 1.2;
+      }
+
+      .label-left {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+
+        border-right: 1px solid #000;
+        padding: 2px;
+        width: 40px;
+      }
+
+      .label-number {
+        font-size: 16px;
+        text-align: center;
+        margin-bottom: 2px;
+      }
+
+      .label-class {
+        font-size: 12px;
+        text-align: center;
+      }
+
+      .label-name {
+        display: flex;
+        font-size: 15px;
+        padding: 2px;
+        line-height: 1.2;
+      }
+      .form-container {
+        margin: 20px;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        max-width: 400px;
+      }
+      .form-group {
+        margin-bottom: 15px;
+      }
+      .form-group label {
+        display: block;
+        margin-bottom: 5px;
+      }
+      .form-group input,
+      .form-group select {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+      button {
+        background-color: #4caf50;
+        color: white;
+        padding: 10px 15px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #45a049;
+      }
+      @media print {
+        @page {
+          size: A4;
+          margin: 1cm;
+        }
+
+        .label-container {
+          gap: 5mm;
+          padding: 0;
+        }
+
+        input,
+        .form-container {
+          display: none;
+        }
+        button {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="form-container">
+      <h2>Criar Etiqueta Individual</h2>
+      <div class="form-group">
+        <label for="nome">Nome do Aluno:</label>
+        <input type="text" id="nome" required />
+      </div>
+      <div class="form-group">
+        <label for="turma">Turma:</label>
+        <select id="turma" required>
+          <optgroup label="PRÉ I">
+            <option value="PRÉ I A">PRÉ I A</option>
+            <option value="PRÉ I B">PRÉ I B</option>
+            <option value="PRÉ I C ">PRÉ I C</option>
+            <option value="PRÉ I D">PRÉ I D</option>
+            <option value="PRÉ I E">PRÉ I E</option>
+            <option value="PRÉ I F">PRÉ I F</option>
+            <option value="PRÉ I G">PRÉ I G</option>
+          </optgroup>
+          <optgroup label="PRÉ II">
+            <option value="PRÉ II A">PRÉ II A</option>
+            <option value="PRÉ II B">PRÉ II B</option>
+            <option value="PRÉ II C">PRÉ II C</option>
+            <option value="PRÉ II D">PRÉ II D</option>
+            <option value="PRÉ II E">PRÉ II E</option>
+            <option value="PRÉ II F">PRÉ II F</option>
+            <option value="PRÉ II G ">PRÉ II G</option>
+            <option value="PRÉ II H">PRÉ II H</option>
+          </optgroup>
+          <optgroup label="CRE III">
+            <option value="CRE III A">CRE III A</option>
+            <option value="CRE III B">CRE III B</option>
+            <option value="CRE III C">CRE III C</option>
+          </optgroup>
+          <optgroup label="CRE IV">
+            <option value="CRE IV A">CRE IV A</option>
+            <option value="CRE IV B">CRE IV B</option>
+            <option value="CRE IV C">CRE IV C</option>
+            <option value="CRE IV E">CRE IV E</option>
+            <option value="CRE IV F ">CRE IV F</option>
+            <option value="CRE IV G">CRE IV G</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="numero">Número:</label>
+        <input type="number" id="numero" min="1" required />
+      </div>
+      <button onclick="gerarEtiquetaIndividual()">Gerar Etiqueta</button>
+    </div>
+
+    <input type="file" id="excelFile" accept=".xlsx, .xls" />
+    <button onclick="processExcel()">Gerar Etiquetas</button>
+    <div id="labelContainer" class="label-container"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script>
+      const turmaColors = {
+        "PRÉ I A": "#FFD1DC",
+        "PRÉ I B": "#B5EAD7",
+        "PRÉ I C ": "#C7CEEA",
+        "PRÉ I D": "#FFDAB9",
+        "PRÉ I E": "#E0BBE4",
+        "PRÉ I F": "#FFFACD",
+        "PRÉ I G": "#FFB6B6",
+        "PRÉ II A": "#98FB98",
+        "PRÉ II B": "#FFC0CB",
+        "PRÉ II C": "#87CEEB",
+        "PRÉ II D": "#DDA0DD",
+        "PRÉ II E": "#F0E68C",
+        "PRÉ II F": "#B0E0E6",
+        "PRÉ II G ": "#FFB347",
+        "PRÉ II H": "#D8BFD8",
+        "CRE III A": "#AFEEEE",
+        "CRE III B": "#FFE4B5",
+        "CRE III C": "#98FF98",
+        "CRE IV A": "#DEB887",
+        "CRE IV B": "#F08080",
+        "CRE IV C": "#E6E6FA",
+        "CRE IV E": "#FFA07A",
+        "CRE IV F ": "#BFEFFF",
+        "CRE IV G": "#F4A460",
+      };
+      function gerarEtiquetaIndividual() {
+        const nome = document.getElementById("nome").value;
+        const turma = document.getElementById("turma").value;
+        const numero = document.getElementById("numero").value;
+
+        const container = document.getElementById("labelContainer");
+        container.innerHTML = "";
+
+        const label = document.createElement("div");
+        label.className = "label";
+        label.style.backgroundColor = turmaColors[turma] || "#FFFFFF";
+
+        const leftDiv = document.createElement("div");
+        leftDiv.className = "label-left";
+
+        const numberDiv = document.createElement("div");
+        numberDiv.className = "label-number";
+        numberDiv.textContent = numero.toString().padStart(2, "0");
+
+        const classDiv = document.createElement("div");
+        classDiv.className = "label-class";
+        classDiv.textContent = turma;
+
+        const nameDiv = document.createElement("div");
+        nameDiv.className = "label-name";
+        nameDiv.textContent = ajustaNome(nome);
+
+        leftDiv.appendChild(numberDiv);
+        leftDiv.appendChild(classDiv);
+        label.appendChild(leftDiv);
+        label.appendChild(nameDiv);
+        container.appendChild(label);
+      }
+      function processExcel() {
+        const file = document.getElementById("excelFile").files[0];
+        const reader = new FileReader();
+
+        reader.onload = function (e) {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, {
+            type: "array",
+            raw: false,
+            dateNF: "dd/mm/yyyy",
+          });
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          const jsonData = XLSX.utils.sheet_to_json(firstSheet, {
+            raw: false,
+            dateNF: "dd/mm/yyyy",
+          });
+
+          ordenarEGerarEtiquetas(jsonData);
+        };
+
+        reader.readAsArrayBuffer(file);
+      }
+
+      function ajustaNome(nomeCompleto) {
+        let partes = nomeCompleto.split(" ");
+        if (partes.length > 3) {
+          return partes.join(" ");
+        }
+        return nomeCompleto;
+      }
+
+      function ordenarEGerarEtiquetas(data) {
+        const dataCorte = new Date("2025-02-10");
+
+        const alunosProcessados = data.map((aluno) => {
+          const [dia, mes, ano] = (
+            aluno["Data Matrícula"] ||
+            aluno["DATA MATRÍCULA"] ||
+            ""
+          ).split("/");
+          return {
+            ...aluno,
+            nome: aluno.Aluno || aluno["ALUNO"] || "",
+            turma: aluno.Turma || aluno.TURMA || "",
+            dataMatricula: new Date(ano, mes - 1, dia),
+          };
+        });
+
+        const alunosAntes = alunosProcessados
+          .filter((aluno) => aluno.dataMatricula < dataCorte)
+          .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+
+        const alunosDepois = alunosProcessados
+          .filter((aluno) => aluno.dataMatricula >= dataCorte)
+          .sort((a, b) => a.dataMatricula - b.dataMatricula);
+
+        const alunosOrdenados = [...alunosAntes, ...alunosDepois];
+        generateLabels(alunosOrdenados);
+      }
+
+      function generateLabels(data) {
+        const container = document.getElementById("labelContainer");
+        container.innerHTML = "";
+
+        data.forEach((student, index) => {
+          const label = document.createElement("div");
+          label.className = "label";
+
+          // Verifica se a turma existe antes de acessar
+          const turma = student.Turma || student.TURMA || "";
+          label.style.backgroundColor = turmaColors[turma] || "#FFFFFF";
+
+          const leftDiv = document.createElement("div");
+          leftDiv.className = "label-left";
+
+          const numberDiv = document.createElement("div");
+          numberDiv.className = "label-number";
+          numberDiv.textContent = (index + 1).toString().padStart(2, "0");
+
+          const classDiv = document.createElement("div");
+          classDiv.className = "label-class";
+          classDiv.textContent = turma;
+
+          const nameDiv = document.createElement("div");
+          nameDiv.className = "label-name";
+          // Verifica se o nome existe antes de acessar
+          const nome = student.Aluno || student["ALUNO"] || "";
+          nameDiv.textContent = ajustaNome(nome);
+
+          leftDiv.appendChild(numberDiv);
+          leftDiv.appendChild(classDiv);
+          label.appendChild(leftDiv);
+          label.appendChild(nameDiv);
+          container.appendChild(label);
+        });
+      }
+    </script>
+  </body>
+</html>
