@@ -91,8 +91,15 @@
         @page {
           size: A4;
           margin: 1cm;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+          color-adjust: exact !important;
         }
-
+        .label {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+          color-adjust: exact !important;
+        }
         .label-container {
           gap: 5mm;
           padding: 0;
